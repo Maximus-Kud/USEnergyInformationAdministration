@@ -1,121 +1,128 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useRef, useState } from 'react'
+
+import Chart from 'chart.js/auto'
+
 import './App.css'
 
+
+
+
+
 function App() {
-  const [count, setCount] = useState(0)
+  const baseUrl = "http://127.0.0.1:8000/nuclear-outages"
+
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
+
+
+  const [capacity, setCapacity] = useState(false);
+  const [outage, setOutage] = useState(false);
+  const [percentOutage, setPercentOutage] = useState(false);
+
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+
+  
+  useEffect(() => {
+    const url = new URL(baseUrl);
+
+    url.searchParams.set("frequency", "daily");
+
+    if (capacity) url.searchParams.set("capacity", String(capacity));
+    if (outage) url.searchParams.set("outage", String(outage));
+    if (percentOutage) url.searchParams.set("percentOutage", String(percentOutage));
+
+    if (dateFrom) url.searchParams.set("dateFrom", dateFrom);
+    if (dateTo) url.searchParams.set("dateTo", dateTo);
+
+
+    const getInfo = async () => {
+      const response = await fetch(url);
+    }
+  }, [])
+
+
+  const data = [
+    { year: 2010, count: 10 },
+    { year: 2011, count: 20 },
+    { year: 2012, count: 15 },
+    { year: 2013, count: 25 },
+    { year: 2014, count: 22 },
+    { year: 2015, count: 30 },
+    { year: 2016, count: 28 },
+  ];
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+
+
+    const chart = new Chart(chartRef.current, {
+      type: 'bar',
+      data: {
+        labels: data.map(row => row.year),
+        datasets: [
+          {
+            label: 'Acquisitions by year',
+            data: data.map(row => row.count),
+          },
+          {
+            label: 'Some text',
+            data: [20, 10, 35, 8],
+          }
+        ]
+      }
+    });
+
+    return () => {
+      chart.destroy();
+    }
+  }, []);
+
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div id='content'>
+      <div id='title'>Nuclear Outages in the US</div>
 
-      <div className="ticks"></div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <div id='input'>
+        <div style={{fontSize: '30px'}}>Input Info</div>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <div id='input-data-checkboxes'>
+          <label>
+            <input id='capacity-checkbox' type='checkbox' onChange={() => {setCapacity(!capacity)}} />
+            <div>Capacity</div>
+          </label>
+          
+          <label>
+            <input id='outage-checkbox' type='checkbox' onChange={() => {setOutage(!outage)}} />
+            <div>Outage</div>
+          </label>
+
+          <label>
+            <input id='percent-outage-checkbox' type='checkbox' onChange={() => {setPercentOutage(!percentOutage)}} />
+            <div>Percent Outage</div>
+          </label>
+
+
+          <label>
+            <div>From:</div>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+            <div>{dateFrom}</div>
+          </label>
+
+          <label>
+            <div>To:</div>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+            <div>{dateTo}</div>
+          </label>
+        </div>
+      </div>
+
+
+      <div id="chart-container">
+        <canvas id='nuclear-outages-chart' ref={chartRef}></canvas>
+      </div>
+    </div>
   )
 }
 
