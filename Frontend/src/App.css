@@ -32,6 +32,26 @@ label div {
 
 
 
+table {
+    width: 100%;
+    border-collapse: collapse;
+
+    border: 1px solid #000;
+
+    margin-bottom: 50px;
+}
+
+th, td {
+    text-align: center;
+    padding: 8px 0;
+}
+
+th {
+    background: #ececec;
+}
+
+
+
 
 
 #content {
@@ -63,7 +83,7 @@ label div {
 
     position: absolute;
     top: 10%;
-    left: 10%;
+    left: 2%;
 }
 
 
@@ -77,6 +97,13 @@ label div {
 
 
 #chart-container {
-    width: 800px;
+    width: 1400px;
+    height: 700px;
     aspect-ratio: 1;
+}
+
+
+
+#table {
+    width: 90%;
 }

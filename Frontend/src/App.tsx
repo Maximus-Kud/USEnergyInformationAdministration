@@ -22,7 +22,23 @@ function App() {
   const [dateTo, setDateTo] = useState("");
 
 
-  
+  const [apiData, setApiData] = useState<any>(null);
+
+
+
+  const toggleCheckbox = (value: boolean, setter: React.Dispatch<React.SetStateAction<boolean>>) => {
+      const checkedCount = Number(capacity) + Number(outage) + Number(percentOutage);
+
+      
+      if (value && checkedCount === 1) {
+          return;
+      }
+
+      setter(!value);
+  };
+
+
+
   useEffect(() => {
     const url = new URL(baseUrl);
 
@@ -38,19 +54,78 @@ function App() {
 
     const getInfo = async () => {
       const response = await fetch(url);
+      const result = await response.json()
+
+      setApiData(result);
     }
-  }, [])
+
+    getInfo();
+  }, [capacity, outage, percentOutage, dateFrom, dateTo])
 
 
-  const data = [
-    { year: 2010, count: 10 },
-    { year: 2011, count: 20 },
-    { year: 2012, count: 15 },
-    { year: 2013, count: 25 },
-    { year: 2014, count: 22 },
-    { year: 2015, count: 30 },
-    { year: 2016, count: 28 },
-  ];
+  
+  function groupData(data: any[]) {
+    if (!data.length) return [];
+
+    const mode = data.length > 365 ? "year" : data.length > 31 ? "month" : "day";
+
+    const grouped = new Map();
+
+    for (const row of data) {
+      const date = new Date(row.period);
+      let key: string;
+
+      switch (mode) {
+        case "year":
+          key = date.getFullYear().toString();
+          break;
+
+        case "month":
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+          break;
+
+        default:
+          key = row.period;
+      }
+
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          label: key,
+          count: 0,
+
+          capacity: 0,
+          outage: 0,
+          percentOutage: 0,
+        });
+      }
+
+      const item = grouped.get(key);
+
+      item.count++;
+
+      item.capacity += Number(row.capacity);
+      item.outage += Number(row.outage);
+      item.percentOutage += Number(row.percentOutage);
+    }
+    
+
+    for (const item of grouped.values()) {
+      item.percentOutage /= item.count;
+    }
+
+    return [...grouped.values()];
+  }
+
+
+  const grouped = apiData ? groupData(apiData.data).toReversed() : [];
+
+  const labels = grouped.map(x => x.label);
+
+  const capacityInfo = grouped.map(x => x.capacity);
+  const outageInfo = grouped.map(x => x.outage);
+  const percentOutageInfo = grouped.map(x => x.percentOutage);
+
+  
 
   useEffect(() => {
     if (!chartRef.current) return;
@@ -59,15 +134,19 @@ function App() {
     const chart = new Chart(chartRef.current, {
       type: 'bar',
       data: {
-        labels: data.map(row => row.year),
+        labels: labels,
         datasets: [
           {
-            label: 'Acquisitions by year',
-            data: data.map(row => row.count),
+            label: 'Capacity',
+            data: capacityInfo
           },
           {
-            label: 'Some text',
-            data: [20, 10, 35, 8],
+            label: 'Outage (MW)',
+            data: outageInfo,
+          },
+          {
+            label: '% Outage',
+            data: percentOutageInfo
           }
         ]
       }
@@ -76,7 +155,7 @@ function App() {
     return () => {
       chart.destroy();
     }
-  }, []);
+  }, [apiData]);
 
 
   return (
@@ -89,18 +168,18 @@ function App() {
 
         <div id='input-data-checkboxes'>
           <label>
-            <input id='capacity-checkbox' type='checkbox' onChange={() => {setCapacity(!capacity)}} />
+            <input id='capacity-checkbox' type='checkbox' checked={capacity} onChange={() => {toggleCheckbox(capacity, setCapacity)}} />
             <div>Capacity</div>
           </label>
           
           <label>
-            <input id='outage-checkbox' type='checkbox' onChange={() => {setOutage(!outage)}} />
+            <input id='outage-checkbox' type='checkbox' checked={outage} onChange={() => {toggleCheckbox(outage, setOutage)}} />
             <div>Outage</div>
           </label>
 
           <label>
-            <input id='percent-outage-checkbox' type='checkbox' onChange={() => {setPercentOutage(!percentOutage)}} />
-            <div>Percent Outage</div>
+            <input id='percent-outage-checkbox' type='checkbox' checked={percentOutage} onChange={() => {toggleCheckbox(percentOutage, setPercentOutage)}} />
+            <div>% Outage</div>
           </label>
 
 
@@ -121,6 +200,34 @@ function App() {
 
       <div id="chart-container">
         <canvas id='nuclear-outages-chart' ref={chartRef}></canvas>
+      </div>
+
+
+
+      <div id='table'>
+        {apiData && (
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                {capacity && <th>Capacity</th>}
+                {outage && <th>Outage</th>}
+                {percentOutage && <th>% Outage</th>}
+              </tr>
+            </thead>
+
+            <tbody>
+              {apiData.data.map((row: any)=>(
+              <tr key={row.period}>
+                <td>{row.period}</td>
+                {capacity && <td>{row.capacity}</td>}
+                {outage && <td>{row.outage}</td>}
+                {percentOutage && <td>{row.percentOutage}</td>}
+              </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   )

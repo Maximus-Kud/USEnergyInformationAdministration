@@ -2,6 +2,8 @@ import os
 import requests
 
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
+
 from dotenv import load_dotenv
 
 from app.dtos.get_request_dto import GetParams
@@ -30,6 +32,15 @@ def call_api(route: str, params: dict) -> dict:
 
 
 app = FastAPI(title="US EIA (Energy Information Administration)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 @app.get("/nuclear-outages")
